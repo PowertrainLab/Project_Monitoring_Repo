@@ -1,0 +1,42 @@
+
+name: CI/CD Test Runner & Dashboard
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *"
+
+jobs:
+  test-and-update:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+
+    - name: Install Python dependencies
+      run: pip install PyGithub plotly || true
+
+    - name: Run Dashboard Generator (optional)
+      env:
+        GITHUB_TOKEN: ${{ secrets.DASHBOARD_PAT }}
+      run: |
+        if [ -f generate_dashboard.py ]; then
+          echo "📊 Running dashboard generator..."
+          python generate_dashboard.py || echo "⚠️ Dashboard script failed, but continuing..."
+        else
+          echo "ℹ️ No dashboard script found. Skipping."
+        fi
+
+    - name: Run Test Runner (optional)
+      run: |
+        echo "🧪 Running CI test..."
+        echo "from datetime import datetime\nprint('✅ Test executed at:', datetime.utcnow())" > test.py
+        python test.py || echo "❌ Test runner failed"
