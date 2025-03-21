@@ -1,0 +1,38 @@
+
+name: Auto-Update Dashboard
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: "0 */6 * * *"  # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install Python dependencies
+        run: pip install PyGithub plotly
+
+      - name: Generate dashboard
+        env:
+          GITHUB_TOKEN: ${{ secrets.DASHBOARD_PAT }}
+        run: python generate_dashboard.py
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add index.html
+          git commit -m "🔄 Auto-updated dashboard"
+          git push
